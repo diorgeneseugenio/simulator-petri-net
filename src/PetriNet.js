@@ -67,13 +67,32 @@ class PetriNet extends Component {
   }
 
   clickEventNode = (e) => {
-    this.state.nodes.push({
+    var nodeCurrent = {
+        label : this.state.nodeMarkSelected,
+        value : this.state.nodeMarkSelected,
         mark : this.state.mark,
         weigth : this.state.thread.weigth,
         transition : this.state.transitionSelected
-    })
+    }
+
+    var idNodeCurrent = (this.state.nodeMarkSelected-1)
+
+    this.state.nodes[idNodeCurrent] = nodeCurrent
+
+    var transitionIdCurrent = (this.state.transitionSelected-1)
+    var transitionCurrent = this.state.transitions[transitionIdCurrent]
+
+    var newTotalWeight = parseInt(transitionCurrent.totalWeight)+parseInt(nodeCurrent.weigth)
+
+    this.state.transitions[transitionIdCurrent] = {
+      label : transitionCurrent.label,
+      value : transitionCurrent.value,
+      totalWeight: newTotalWeight,
+      nodes: transitionCurrent.nodes
+    }
 
     return this.setState({
+      nodeMarkSelected: 0,
       transitionSelected : 0,
       mark : 0,
       thread : {
@@ -83,6 +102,16 @@ class PetriNet extends Component {
     })
   }
 
+  clickEventTransition = (e) => {
+    var idTransitionCurrent = (this.state.transitionMarkSelected-1)
+    var transationCurrent = this.state.transitions[idTransitionCurrent]
+    transationCurrent.nodes.push(this.state.nodeSelected)
+
+    return this.setState({
+      nodeSelected: 0,
+      transitionMarkSelected : 0
+    })
+  }
 
   clickEventHowManyTransitions = (e) => {
     var numManyOld = 1*this.state.howManyTransitionsOld;
@@ -94,7 +123,7 @@ class PetriNet extends Component {
         label : i + 1,
         value : i + 1,
         totalWeight: 0,
-        nextNode: 0
+        nodes: []
       })
     }
 
@@ -145,7 +174,7 @@ class PetriNet extends Component {
     const { nodes } = this.state
     const nodesList = nodes.map((item, i) => {
         return (
-              <tr key={item}>
+              <tr key={i}>
                 <td>{(i+1)}</td>
                 <td>{item.mark.toString()}</td>
                 <td>{item.weigth.toString()}</td>
@@ -159,7 +188,7 @@ class PetriNet extends Component {
         return (
               <tr key={i}>
                 <td>{(i+1)}</td>
-                <td>{item.nextNode.toString()}</td>
+                <td>{item.nodes.join(', ')}</td>
                 <td>{item.totalWeight.toString()}</td>
               </tr>
             )
@@ -230,7 +259,7 @@ class PetriNet extends Component {
                       <Select
                         name="node"
                         value={valueNode}
-                        onChange={this.handleChangeNodes}
+                        onChange={this.handleChangeNode}
                         options={this.state.nodes}
                         simpleValue
                       />
@@ -245,9 +274,9 @@ class PetriNet extends Component {
                       onChange={this.updateInputWeightThread}
                     />
                     <Button
-                    id='addNode'
+                    id='addTransition'
                     text = 'Add'
-                    onClick = {this.clickEventHowManyNode}
+                    onClick = {this.clickEventTransition}
                     colClass = 'col-sm-2'
                     />
                   </Row>
@@ -369,7 +398,7 @@ class PetriNet extends Component {
                   </tr>
                 </thead>
                 <tbody>
-                  {transitionList}
+                    {transitionList}
                 </tbody>
               </Table>
               </Col>
