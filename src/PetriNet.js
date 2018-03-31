@@ -244,7 +244,7 @@ class PetriNet extends Component {
                     </div>
                   </Row>
                   <Row>
-                    <div className="col-sm-3">
+                    <div className="col-sm-4">
                       <label>Transition</label>
                       <Select
                         name="transitions"
@@ -254,7 +254,7 @@ class PetriNet extends Component {
                         simpleValue
                       />
                     </div>
-                    <div className="col-sm-3">
+                    <div className="col-sm-4">
                       <label>Node</label>
                       <Select
                         name="node"
@@ -264,15 +264,6 @@ class PetriNet extends Component {
                         simpleValue
                       />
                     </div>
-                    <FormGroup
-                      name="weigth"
-                      id="weigth"
-                      value={this.state.thread.weigth}
-                      label="Weigth"
-                      type="number"
-                      colClass="col-sm-2"
-                      onChange={this.updateInputWeightThread}
-                    />
                     <Button
                     id='addTransition'
                     text = 'Add'
