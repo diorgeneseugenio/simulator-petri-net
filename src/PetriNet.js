@@ -12,21 +12,26 @@ class PetriNet extends Component {
   constructor(props){
     super(props)
     this.state = {
-      transitionSelected: 0,
-      transitionMarkSelected: 0,
+      /* LISTS */
       transitions : [],
+      nodes : [],
+      nodesToTransitions: [],
+      transitionsToNodes: [],
+      /* CONTROL SELECTED FIELDS */
+      transitionSelected: 0,
+      transitionLinkSelected: 0,
       nodeSelected: 0,
       nodeMarkSelected: 0,
-      nodes : [],
-      mark : 0,
-      thread : {
-          weigth : 0,
-          transition : 0
-      },
+      nodeLinkSelected: 0,
+      /* CONTROL HOW MANY OBJECTS */
       howManyTransitions : 0,
       howManyTransitionsOld : 0,
       howManyNodes : 0,
-      howManyNodesOld : 0
+      howManyNodesOld : 0,
+      /* SUPPORT FIELDS */
+      mark : 0,
+      weigthNode : 0,
+      weigthTransition : 0
     }
   }
 
@@ -50,66 +55,105 @@ class PetriNet extends Component {
 
   updateInputWeightThread = (e) => {
     return this.setState({
-            thread : {
-              weigth: e.target.value,
-              transition: this.state.thread.transition
-            }
+            weigthNode: e.target.value
+          })
+  }
+
+  updateInputWeightTransition = (e) => {
+    return this.setState({
+            weigthTransition: e.target.value
           })
   }
 
   updateInputTransition = (e) => {
     return this.setState({
-            thread : {
-              transition: e.target.value,
-              weigth: this.state.thread.weigth
-            }
+            transition: e.target.value
           })
   }
 
+  updateNumberTransitions = (e) => {
+    var quant = 0
+    var nodeId = (e.node-1)
+
+    const { nodesToTransitions } = this.state
+    const nodesList = nodesToTransitions.map((item, i) => {
+      if(item.node === e.node) quant++
+    })
+
+    return(
+      this.state.nodes[nodeId] = {
+        label : this.state.nodes[nodeId].label,
+        value : this.state.nodes[nodeId].value,
+        transitions : quant,
+        mark : this.state.nodes[nodeId].mark,
+      }
+    )
+  }
+
   clickEventNode = (e) => {
-    var nodeCurrent = {
-        label : this.state.nodeMarkSelected,
-        value : this.state.nodeMarkSelected,
-        mark : this.state.mark,
-        weigth : this.state.thread.weigth,
-        transition : this.state.transitionSelected
-    }
-
-    var idNodeCurrent = (this.state.nodeMarkSelected-1)
-
-    this.state.nodes[idNodeCurrent] = nodeCurrent
-
     var transitionIdCurrent = (this.state.transitionSelected-1)
     var transitionCurrent = this.state.transitions[transitionIdCurrent]
 
-    var newTotalWeight = parseInt(transitionCurrent.totalWeight)+parseInt(nodeCurrent.weigth)
+    var idNodeCurrent = (this.state.nodeLinkSelected-1)
+
+    var newNodeToTransition = {
+      node : this.state.nodeLinkSelected,
+      weigthNode : this.state.weigthNode,
+      transition :this.state.transitionSelected
+    }
+
+    this.state.nodesToTransitions.push(newNodeToTransition)
+
+    this.updateNumberTransitions({node : this.state.nodeLinkSelected})
+
+    var newTotalWeight = parseInt(transitionCurrent.totalWeight)+parseInt(this.state.weigthNode)
 
     this.state.transitions[transitionIdCurrent] = {
       label : transitionCurrent.label,
       value : transitionCurrent.value,
-      totalWeight: newTotalWeight,
-      nodes: transitionCurrent.nodes
+      totalWeight: newTotalWeight
     }
 
     return this.setState({
-      nodeMarkSelected: 0,
+      nodeLinkSelected: 0,
       transitionSelected : 0,
-      mark : 0,
-      thread : {
-          weigth : 0,
-          transition : 0
-      }
+      weigthNode : 0
     })
   }
 
   clickEventTransition = (e) => {
-    var idTransitionCurrent = (this.state.transitionMarkSelected-1)
-    var transationCurrent = this.state.transitions[idTransitionCurrent]
-    transationCurrent.nodes.push(this.state.nodeSelected)
+    var newTansitionToNode = {
+      node : this.state.nodeSelected,
+      weigthTransition : this.state.weigthTransition,
+      transition :this.state.transitionLinkSelected
+    }
+
+    this.state.transitionsToNodes.push(newTansitionToNode)
 
     return this.setState({
       nodeSelected: 0,
-      transitionMarkSelected : 0
+      transitionLinkSelected : 0,
+      weigthTransition : 0
+    })
+  }
+
+  clickEventNodeAddMark = (e) => {
+
+    var currentNode = (this.state.nodeMarkSelected-1)
+
+    var totalMark = parseInt(this.state.mark)+parseInt(this.state.nodes[currentNode].mark)
+
+    var newNode = {
+      label : this.state.nodes[currentNode].label,
+      value : this.state.nodes[currentNode].value,
+      mark : totalMark
+    }
+
+    this.state.nodes[currentNode] = newNode
+
+    return this.setState({
+      nodeMarkSelected : 0,
+      mark : 0
     })
   }
 
@@ -122,8 +166,7 @@ class PetriNet extends Component {
       this.state.transitions.push({
         label : i + 1,
         value : i + 1,
-        totalWeight: 0,
-        nodes: []
+        totalWeight: 0
       })
     }
 
@@ -142,8 +185,6 @@ class PetriNet extends Component {
       this.state.nodes.push({
         label : i + 1,
         value : i + 1,
-        transition : 0,
-        weigth: 0,
         mark : 0
       })
     }
@@ -166,8 +207,12 @@ class PetriNet extends Component {
     this.setState({ nodeMarkSelected });
   }
 
-  handleChangeMarkTransition = (transitionMarkSelected) => {
-    this.setState({ transitionMarkSelected });
+  handleChangeLinkTransition = (transitionLinkSelected) => {
+    this.setState({ transitionLinkSelected });
+  }
+
+  handleChangeLinkNode = (nodeLinkSelected) => {
+    this.setState({ nodeLinkSelected });
   }
 
   render(){
@@ -177,10 +222,8 @@ class PetriNet extends Component {
               <tr key={i}>
                 <td>{(i+1)}</td>
                 <td>{item.mark.toString()}</td>
-                <td>{item.weigth.toString()}</td>
-                <td>{item.transition.toString()}</td>
               </tr>
-            )
+        )
     })
 
     const { transitions } = this.state
@@ -188,8 +231,29 @@ class PetriNet extends Component {
         return (
               <tr key={i}>
                 <td>{(i+1)}</td>
-                <td>{item.nodes.join(', ')}</td>
                 <td>{item.totalWeight.toString()}</td>
+              </tr>
+            )
+    })
+
+    const { nodesToTransitions } = this.state
+    const nodesToTransitionsList = nodesToTransitions.map((item, i) => {
+        return (
+              <tr key={i}>
+                <td>{item.node}</td>
+                <td>{item.weigthNode}</td>
+                <td>{item.transition}</td>
+              </tr>
+            )
+    })
+
+    const { transitionsToNodes } = this.state
+    const transitionsToNodesList = transitionsToNodes.map((item, i) => {
+        return (
+              <tr key={i}>
+                <td>{item.transition}</td>
+                <td>{item.weigthTransition}</td>
+                <td>{item.node}</td>
               </tr>
             )
     })
@@ -200,17 +264,21 @@ class PetriNet extends Component {
     const { nodeSelected } = this.state;
     const valueNode = nodeSelected && nodeSelected.toString();
 
-    const { transitionMarkSelected } = this.state;
-    const valueTransitionMark= transitionMarkSelected && transitionMarkSelected.toString();
-
     const { nodeMarkSelected } = this.state;
     const valueMarkNode = nodeMarkSelected && nodeMarkSelected.toString();
+
+    const { transitionLinkSelected } = this.state;
+    const valueTransitionMark= transitionLinkSelected && transitionLinkSelected.toString();
+
+    const { nodeLinkSelected } = this.state;
+    const valueLinkNode = nodeLinkSelected && nodeLinkSelected.toString();
 
     return(
         <div>
           <Container>
             <Row>
               <div className="col-sm-4">
+                {/* GENERATE TRANSITIONS */}
                 <Container id="transitions">
                   <Row>
                     <div className="col-sm-12 title-head-div">
@@ -237,6 +305,7 @@ class PetriNet extends Component {
                 </Container>
               </div>
               <div className="col-sm-8">
+                {/* LINK TRANSITIONS */}
                 <Container id="transitions">
                   <Row>
                     <div className="col-sm-12 title-head-div">
@@ -249,11 +318,20 @@ class PetriNet extends Component {
                       <Select
                         name="transitions"
                         value={valueTransitionMark}
-                        onChange={this.handleChangeMarkTransition}
+                        onChange={this.handleChangeLinkTransition}
                         options={this.state.transitions}
                         simpleValue
                       />
                     </div>
+                    <FormGroup
+                      name="weigthTransition"
+                      id="weigthTransition"
+                      value={this.state.weigthTransition}
+                      label="Weigth"
+                      type="number"
+                      colClass="col-sm-2"
+                      onChange={this.updateInputWeightTransition}
+                    />
                     <div className="col-sm-4">
                       <label>Node</label>
                       <Select
@@ -276,6 +354,7 @@ class PetriNet extends Component {
             </Row>
             <Row>
               <div className="col-sm-4">
+                {/* GENERATE NODES */}
                 <Container id="transitions">
                   <Row>
                     <div className="col-sm-12 title-head-div">
@@ -302,6 +381,7 @@ class PetriNet extends Component {
                 </Container>
               </div>
               <div className="col-sm-8">
+                {/* LINK NODES */}
                 <Container id="nodes">
                   <Row>
                     <div className="col-sm-12 title-head-div">
@@ -312,26 +392,17 @@ class PetriNet extends Component {
                     <div className="col-sm-3">
                       <label>Node</label>
                       <Select
-                        name="nodeMark"
-                        value={valueMarkNode}
-                        onChange={this.handleChangeMarkNode}
+                        name="nodeLink"
+                        value={valueLinkNode}
+                        onChange={this.handleChangeLinkNode}
                         options={this.state.nodes}
                         simpleValue
                       />
                     </div>
                     <FormGroup
-                      name="mark"
-                      id="mark"
-                      value={this.state.mark}
-                      label="Mark"
-                      type="number"
-                      colClass="col-sm-2"
-                      onChange={this.updateInputMark}
-                    />
-                    <FormGroup
                       name="weigth"
                       id="weigth"
-                      value={this.state.thread.weigth}
+                      value={this.state.weigthNode}
                       label="Weigth"
                       type="number"
                       colClass="col-sm-2"
@@ -357,19 +428,55 @@ class PetriNet extends Component {
                 </Container>
               </div>
             </Row>
-          </Container>
-          <Container>
             <Row>
+              <Col class="col-md-4">
+                {/* GENERATE MARKS INTO NODE */}
+                <Container id="nodes">
+                  <Row>
+                    <div className="col-sm-12 title-head-div">
+                      <h5> Mark - Node </h5>
+                    </div>
+                  </Row>
+                  <Row>
+                    <div className="col-sm-6">
+                      <label>Node</label>
+                      <Select
+                        name="nodeMark"
+                        value={valueMarkNode}
+                        onChange={this.handleChangeMarkNode}
+                        options={this.state.nodes}
+                        simpleValue
+                      />
+                    </div>
+                    <FormGroup
+                      name="mark"
+                      id="mark"
+                      value={this.state.mark}
+                      label="Mark"
+                      type="number"
+                      colClass="col-sm-3"
+                      onChange={this.updateInputMark}
+                    />
+                    <Button
+                    id='addNode'
+                    text = 'Add'
+                    onClick = {this.clickEventNodeAddMark}
+                    colClass = 'col-sm-2'
+                    />
+                  </Row>
+                </Container>
+              </Col>
               <Col
-                class="col-sm-8"
+                class="col-sm-4"
               >
                 <Table>
                   <thead>
                     <tr>
-                      <td>Id</td>
-                      <td>Mark</td>
-                      <td>Weigth</td>
-                      <td>Transition</td>
+                      <td colSpan="2" className="text-center head-table-big-title">Nodes</td>
+                    </tr>
+                    <tr>
+                      <td className="text-center head-table-little-title">Id</td>
+                      <td className="text-center head-table-little-title">Mark</td>
                     </tr>
                   </thead>
                   <tbody>
@@ -383,15 +490,55 @@ class PetriNet extends Component {
               <Table>
                 <thead>
                   <tr>
-                    <td>Id</td>
-                    <td>Next Node</td>
-                    <td>Total Weigth</td>
+                    <td colSpan="2" className="text-center head-table-big-title">Transitions</td>
+                  </tr>
+                  <tr>
+                    <td className="text-center head-table-little-title">Id</td>
+                    <td className="text-center head-table-little-title">Total Weigth to Work</td>
                   </tr>
                 </thead>
                 <tbody>
                     {transitionList}
                 </tbody>
               </Table>
+              </Col>
+            </Row>
+          </Container>
+          <Container>
+            <Row>
+              <Col class="col-sm-6">
+                <Table>
+                  <thead>
+                    <tr>
+                      <td colSpan="3" className="text-center head-table-big-title">NODES -> TRANSITIONS </td>
+                    </tr>
+                    <tr>
+                      <td className="text-center head-table-little-title">Node</td>
+                      <td className="text-center head-table-little-title">Weigth</td>
+                      <td className="text-center head-table-little-title">Transition</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                      {nodesToTransitionsList}
+                  </tbody>
+                </Table>
+              </Col>
+              <Col class="col-sm-6">
+                <Table>
+                  <thead>
+                    <tr>
+                      <td colSpan="3" className="text-center head-table-big-title">TRANSITIONS -> NODES </td>
+                    </tr>
+                    <tr>
+                      <td className="text-center head-table-little-title">Transition</td>
+                      <td className="text-center head-table-little-title">Weigth</td>
+                      <td className="text-center head-table-little-title">Node</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                      {transitionsToNodesList}
+                  </tbody>
+                </Table>
               </Col>
             </Row>
           </Container>

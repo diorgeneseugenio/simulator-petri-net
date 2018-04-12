@@ -35,3 +35,13 @@ body {
   border: 1px solid rgba(175,175,175, 0.2);
   box-shadow: 3px 6px 8px rgba(175,175,175, 0.2);
 }
+
+.head-table-big-title{
+  background-color: #efefef;
+  font-weight: bold;
+}
+
+.head-table-little-title{
+  background-color: #f6f6f6;
+  font-weight: bold;
+}
