@@ -91,44 +91,80 @@ class PetriNet extends Component {
   }
 
   clickEventNode = (e) => {
-    var transitionIdCurrent = (this.state.transitionSelected-1)
-    var transitionCurrent = this.state.transitions[transitionIdCurrent]
+    if(this.state.weigthNode > 0){
+      var transitionIdCurrent = (this.state.transitionSelected-1)
+      var transitionCurrent = this.state.transitions[transitionIdCurrent]
 
-    var idNodeCurrent = (this.state.nodeLinkSelected-1)
+      var idNodeCurrent = (this.state.nodeLinkSelected-1)
 
-    var newNodeToTransition = {
-      node : this.state.nodeLinkSelected,
-      weigthNode : this.state.weigthNode,
-      transition :this.state.transitionSelected
+      var newNodeToTransition = {
+        node : this.state.nodeLinkSelected,
+        weigthNode : this.state.weigthNode,
+        transition : this.state.transitionSelected
+      }
+
+      var exists = false
+      var idNodeToTransition = 0
+      var subsWeight = 0
+
+      var { nodesToTransitions } = this.state
+      nodesToTransitions.map((item, i) => {
+        if(item.transition === this.state.transitionSelected && item.node === this.state.nodeLinkSelected){
+          exists = true
+          idNodeToTransition = i
+          subsWeight = -1*item.weigthNode
+        }
+      })
+
+      if(!exists){
+        this.state.nodesToTransitions.push(newNodeToTransition)
+      }else{
+        this.state.nodesToTransitions[idNodeToTransition] = newNodeToTransition
+      }
+
+      var newTotalWeight = parseInt(transitionCurrent.totalWeight)+parseInt(this.state.weigthNode)+parseInt(subsWeight)
+
+      this.state.transitions[transitionIdCurrent] = {
+        label : transitionCurrent.label,
+        value : transitionCurrent.value,
+        totalWeight: newTotalWeight
+      }
+
+      return this.setState({
+        nodeLinkSelected: 0,
+        transitionSelected : 0,
+        weigthNode : 0
+      })
     }
-
-    this.state.nodesToTransitions.push(newNodeToTransition)
-
-    this.updateNumberTransitions({node : this.state.nodeLinkSelected})
-
-    var newTotalWeight = parseInt(transitionCurrent.totalWeight)+parseInt(this.state.weigthNode)
-
-    this.state.transitions[transitionIdCurrent] = {
-      label : transitionCurrent.label,
-      value : transitionCurrent.value,
-      totalWeight: newTotalWeight
-    }
-
-    return this.setState({
-      nodeLinkSelected: 0,
-      transitionSelected : 0,
-      weigthNode : 0
-    })
   }
 
   clickEventTransition = (e) => {
-    var newTansitionToNode = {
-      node : this.state.nodeSelected,
-      weigthTransition : this.state.weigthTransition,
-      transition :this.state.transitionLinkSelected
-    }
 
-    this.state.transitionsToNodes.push(newTansitionToNode)
+    if(this.state.weigthTransition > 0){
+      var newTansitionToNode = {
+        node : this.state.nodeSelected,
+        weigthTransition : this.state.weigthTransition,
+        transition :this.state.transitionLinkSelected
+      }
+
+      var exists = false;
+      var idTransitionToNode = 0;
+
+      var { transitionsToNodes } = this.state
+      transitionsToNodes.map((item, i) => {
+        console.log("Item T => "+item.transition+" == This.state.Transition "+this.state.transitionLinkSelected+" && Item N "+item.node+" == This.state.Node"+this.state.nodeSelected)
+        if(item.transition === this.state.transitionLinkSelected && item.node === this.state.nodeSelected){
+          exists = true
+          idTransitionToNode = i
+        }
+      })
+
+      if(!exists){
+        this.state.transitionsToNodes.push(newTansitionToNode)
+      }else{
+        this.state.transitionsToNodes[idTransitionToNode] = newTansitionToNode
+      }
+    }
 
     return this.setState({
       nodeSelected: 0,
@@ -139,22 +175,24 @@ class PetriNet extends Component {
 
   clickEventNodeAddMark = (e) => {
 
-    var currentNode = (this.state.nodeMarkSelected-1)
+    if(this.state.mark > 0){
+      var currentNode = (this.state.nodeMarkSelected-1)
 
-    var totalMark = parseInt(this.state.mark)+parseInt(this.state.nodes[currentNode].mark)
+      var totalMark = parseInt(this.state.mark)+parseInt(this.state.nodes[currentNode].mark)
 
-    var newNode = {
-      label : this.state.nodes[currentNode].label,
-      value : this.state.nodes[currentNode].value,
-      mark : totalMark
+      var newNode = {
+        label : this.state.nodes[currentNode].label,
+        value : this.state.nodes[currentNode].value,
+        mark : totalMark
+      }
+
+      this.state.nodes[currentNode] = newNode
+
+      return this.setState({
+        nodeMarkSelected : 0,
+        mark : 0
+      })
     }
-
-    this.state.nodes[currentNode] = newNode
-
-    return this.setState({
-      nodeMarkSelected : 0,
-      mark : 0
-    })
   }
 
   clickEventHowManyTransitions = (e) => {
