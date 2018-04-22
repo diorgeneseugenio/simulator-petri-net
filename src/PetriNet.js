@@ -7,6 +7,7 @@ import Button from './Button'
 import Table from './Table'
 import Col from './Col'
 import Select from 'react-select'
+import _ from 'lodash'
 
 class PetriNet extends Component {
   constructor(props){
@@ -17,6 +18,7 @@ class PetriNet extends Component {
       nodes : [],
       nodesToTransitions: [],
       transitionsToNodes: [],
+      transitionToRounds: [],
       /* CONTROL SELECTED FIELDS */
       transitionSelected: 0,
       transitionLinkSelected: 0,
@@ -28,10 +30,12 @@ class PetriNet extends Component {
       howManyTransitionsOld : 0,
       howManyNodes : 0,
       howManyNodesOld : 0,
+      quantTransitions : 0,
       /* SUPPORT FIELDS */
       mark : 0,
       weigthNode : 0,
-      weigthTransition : 0
+      weigthTransition : 0,
+      numberRounds: 0
     }
   }
 
@@ -152,7 +156,6 @@ class PetriNet extends Component {
 
       var { transitionsToNodes } = this.state
       transitionsToNodes.map((item, i) => {
-        console.log("Item T => "+item.transition+" == This.state.Transition "+this.state.transitionLinkSelected+" && Item N "+item.node+" == This.state.Node"+this.state.nodeSelected)
         if(item.transition === this.state.transitionLinkSelected && item.node === this.state.nodeSelected){
           exists = true
           idTransitionToNode = i
@@ -199,8 +202,10 @@ class PetriNet extends Component {
     var numManyOld = 1*this.state.howManyTransitionsOld;
     var numMany = 1*this.state.howManyTransitions;
     var numTotal = numManyOld+numMany;
+    var numQuant = 1*this.state.quantTransitions;
 
     for (var i = numManyOld; i < numTotal; i++) {
+      numQuant += 1
       this.state.transitions.push({
         label : i + 1,
         value : i + 1,
@@ -210,7 +215,8 @@ class PetriNet extends Component {
 
     return this.setState({
       howManyTransitionsOld : this.state.howManyTransitions,
-      howManyTransitions : 0
+      howManyTransitions : 0,
+      quantTransitions : numQuant
     })
   }
 
@@ -230,6 +236,91 @@ class PetriNet extends Component {
     return this.setState({
       howManyNodesOld : this.state.howManyNodes,
       howManyNodes : 0
+    })
+  }
+
+  clickRunNet= (e) => {
+    var newNumberRounds = (parseInt(this.state.numberRounds) + 1)
+    var listTransitions = []
+    var node = 0
+    var totalWeightState = 0
+    var totalWeightInteration = 0
+    var activeTransition = true
+    var transitionCurrent = null
+    var listNodes = null
+    var keyNode = 0
+
+    this.state.transitions.map((item, i) => {
+      totalWeightState = parseInt(item.totalWeight)
+      totalWeightInteration = 0
+      activeTransition = true
+      transitionCurrent = null
+      listNodes = this.state.nodes
+
+      this.state.nodesToTransitions.map((ntt, n) => {
+        //console.log("## TEST TRANSITION "+ntt.transition+" == "+item.label+" && active "+activeTransition)
+        if(ntt.transition == item.label && activeTransition == true){
+          keyNode = parseInt(ntt.node)-1
+          node = listNodes[keyNode]
+          //console.log("## NODE["+keyNode+"] MARK "+node.mark+" < "+ntt.weigthNode)
+          if(node.mark < ntt.weigthNode){
+            activeTransition = false
+          }else{
+            totalWeightInteration += parseInt(ntt.weigthNode)
+            node.mark -= parseInt(ntt.weigthNode)
+            listNodes[keyNode] = node
+          }
+        }
+      })
+
+      //console.log("## TEST WEIGHT "+totalWeightState+" != "+totalWeightInteration)
+      if(totalWeightState > totalWeightInteration || totalWeightState == 0){
+        activeTransition = false
+      }
+
+      if(activeTransition){
+        this.state.nodes = listNodes
+      }
+
+      transitionCurrent = {
+        id : item.label,
+        active: activeTransition
+      }
+
+      listTransitions.push(transitionCurrent)
+
+      if(activeTransition){
+        this.state.transitionsToNodes.map((ttn, t) => {
+          if(ttn.transition == item.label){
+            var totalMark = 0
+            var keyNode = parseInt(ttn.node)-1
+            var node = this.state.nodes[keyNode]
+
+            totalMark = parseInt(node.mark)+parseInt(ttn.weigthTransition)
+
+            node.mark = totalMark
+
+            this.state.nodes[keyNode] = node
+          }
+        })
+      }
+    })
+
+    var newRound = {
+      round : newNumberRounds,
+      transitions : listTransitions
+    }
+
+    this.state.transitionToRounds.push(newRound)
+
+    return this.setState({
+      numberRounds : newNumberRounds
+    })
+  }
+
+  clickResetNet = (e) => {
+    return this.setState({
+      transitionToRounds : []
     })
   }
 
@@ -310,6 +401,26 @@ class PetriNet extends Component {
 
     const { nodeLinkSelected } = this.state;
     const valueLinkNode = nodeLinkSelected && nodeLinkSelected.toString();
+
+    const transitionsActivesHeader = transitions.map((item, i) => {
+        return (
+                <td>T{item.label}</td>
+            )
+    })
+    const { transitionToRounds } = this.state
+    const transitionsToRoundList = transitionToRounds.map((item, i) => {
+      console.log(item)
+        return (
+              <tr key={i}>
+                <td>{item.round}</td>
+                {item.transitions.map((dados, d) => {
+                  return(
+                    <td>{dados.active ? 'Yes' : 'No'}</td>
+                  )
+                })}
+              </tr>
+            )
+    })
 
     return(
         <div>
@@ -575,6 +686,46 @@ class PetriNet extends Component {
                   </thead>
                   <tbody>
                       {transitionsToNodesList}
+                  </tbody>
+                </Table>
+              </Col>
+            </Row>
+          </Container>
+          <Container>
+            <Row>
+              <Col class="col-sm-1">
+                <Button
+                id='runNet'
+                text = 'Run'
+                onClick = {this.clickRunNet}
+                colClass = 'col-sm-1'
+                />
+              </Col>
+              <Col class="col-sm-1">
+                <Button
+                id='resetNet'
+                text = 'Reset'
+                onClick = {this.clickResetNet}
+                colClass = 'col-sm-1'
+                />
+              </Col>
+            </Row>
+          </Container>
+          <Container>
+            <Row>
+              <Col class="col-sm-12">
+                <Table>
+                  <thead>
+                    <tr>
+                      <td colSpan={(this.state.quantTransitions+1)} className="text-center head-table-big-title">ROUND TRANSITIONS</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      {transitionsActivesHeader}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transitionsToRoundList}
                   </tbody>
                 </Table>
               </Col>
