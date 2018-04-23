@@ -253,16 +253,27 @@ class PetriNet extends Component {
       totalWeightInteration = 0
       activeTransition = true
       transitionCurrent = null
+      var times = 0
+      var numNodes = 0
 
       this.state.nodesToTransitions.map((ntt, n) => {
         if(ntt.transition == item.label && activeTransition == true){
+          numNodes++
           keyNode = parseInt(ntt.node)-1
           var nodeN = this.state.nodes[keyNode]
           if(nodeN.mark < ntt.weigthNode){
             activeTransition = false
           }else{
-            totalWeightInteration += parseInt(ntt.weigthNode)
-            nodeN.mark -= parseInt(ntt.weigthNode)
+            var isPossible = true
+            while(isPossible){
+              if(nodeN.mark < ntt.weigthNode){
+                 isPossible = false
+              }else{
+                times++
+                nodeN.mark -= parseInt(ntt.weigthNode)
+                totalWeightInteration += parseInt(ntt.weigthNode)
+              }
+            }
             this.state.nodes[keyNode] = nodeN
           }
         }
@@ -274,7 +285,8 @@ class PetriNet extends Component {
 
       transitionCurrent = {
         id : item.label,
-        active: activeTransition
+        active: activeTransition,
+        numTimes: (parseInt(times)/parseInt(numNodes))
       }
 
       listTransitions.push(transitionCurrent)
@@ -288,7 +300,7 @@ class PetriNet extends Component {
             var totalMark = 0
             var keyNode = parseInt(ttn.node)-1
             var node = this.state.nodes[keyNode]
-            totalMark = parseInt(node.mark)+parseInt(ttn.weigthTransition)
+            totalMark = parseInt(node.mark)+(parseInt(ttn.weigthTransition)*parseInt(item.numTimes))
             node.mark = totalMark
             this.state.nodes[keyNode] = node
           }
