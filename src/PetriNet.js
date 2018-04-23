@@ -304,16 +304,16 @@ class PetriNet extends Component {
             }
           })
           var nodeCurrent = this.state.nodes[item.node]
-          console.log("NODE["+item.node+"]"+parseInt(item.weight)+"*"+lessTime)
           nodeCurrent.mark -= parseInt(item.weight)*lessTime
           this.state.nodes[item.node] = nodeCurrent
         })
       }
-      
+
       var isValid = false
       var coef = (parseInt(totalTimes)/parseInt(numNodes))
       while(!isValid){
         var coef = (parseInt(totalTimes)/parseInt(numNodes))
+        //console.log("NODE = "+item.label+" totalTimes = "+totalTimes+" / numNodes = "+numNodes)
         if((coef / totalWeightState) % 1 == 0){
           isValid = true
         }else{
@@ -337,6 +337,7 @@ class PetriNet extends Component {
             var totalMark = 0
             var keyNode = parseInt(ttn.node)-1
             var node = this.state.nodes[keyNode]
+            if(!item.numTimes) item.numTimes = 1
             totalMark = parseInt(node.mark)+(parseInt(ttn.weigthTransition)*parseInt(item.numTimes))
             node.mark = totalMark
             this.state.nodes[keyNode] = node
