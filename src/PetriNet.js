@@ -247,39 +247,29 @@ class PetriNet extends Component {
     var totalWeightInteration = 0
     var activeTransition = true
     var transitionCurrent = null
-    var listNodes = null
     var keyNode = 0
-
     this.state.transitions.map((item, i) => {
       totalWeightState = parseInt(item.totalWeight)
       totalWeightInteration = 0
       activeTransition = true
       transitionCurrent = null
-      listNodes = this.state.nodes
 
       this.state.nodesToTransitions.map((ntt, n) => {
-        //console.log("## TEST TRANSITION "+ntt.transition+" == "+item.label+" && active "+activeTransition)
         if(ntt.transition == item.label && activeTransition == true){
           keyNode = parseInt(ntt.node)-1
-          node = listNodes[keyNode]
-          //console.log("## NODE["+keyNode+"] MARK "+node.mark+" < "+ntt.weigthNode)
-          if(node.mark < ntt.weigthNode){
+          var nodeN = this.state.nodes[keyNode]
+          if(nodeN.mark < ntt.weigthNode){
             activeTransition = false
           }else{
             totalWeightInteration += parseInt(ntt.weigthNode)
-            node.mark -= parseInt(ntt.weigthNode)
-            listNodes[keyNode] = node
+            nodeN.mark -= parseInt(ntt.weigthNode)
+            this.state.nodes[keyNode] = nodeN
           }
         }
       })
 
-      //console.log("## TEST WEIGHT "+totalWeightState+" != "+totalWeightInteration)
       if(totalWeightState > totalWeightInteration || totalWeightState == 0){
         activeTransition = false
-      }
-
-      if(activeTransition){
-        this.state.nodes = listNodes
       }
 
       transitionCurrent = {
@@ -288,18 +278,18 @@ class PetriNet extends Component {
       }
 
       listTransitions.push(transitionCurrent)
+    })
 
-      if(activeTransition){
+    listTransitions.map((item, i) => {
+      if(item.active){
         this.state.transitionsToNodes.map((ttn, t) => {
-          if(ttn.transition == item.label){
+          console.log(ttn.transition+" --- "+item.id)
+          if(ttn.transition == item.id){
             var totalMark = 0
             var keyNode = parseInt(ttn.node)-1
             var node = this.state.nodes[keyNode]
-
             totalMark = parseInt(node.mark)+parseInt(ttn.weigthTransition)
-
             node.mark = totalMark
-
             this.state.nodes[keyNode] = node
           }
         })
@@ -409,7 +399,7 @@ class PetriNet extends Component {
     })
     const { transitionToRounds } = this.state
     const transitionsToRoundList = transitionToRounds.map((item, i) => {
-      console.log(item)
+      //console.log(item)
         return (
               <tr key={i}>
                 <td>{item.round}</td>
