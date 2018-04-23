@@ -7,7 +7,7 @@ import Button from './Button'
 import Table from './Table'
 import Col from './Col'
 import Select from 'react-select'
-import _ from 'lodash'
+import lodash from 'lodash'
 
 class PetriNet extends Component {
   constructor(props){
@@ -253,28 +253,40 @@ class PetriNet extends Component {
       totalWeightInteration = 0
       activeTransition = true
       transitionCurrent = null
-      var times = 0
       var numNodes = 0
-
+      var auxTran = []
+      var totalTimes = 0
       this.state.nodesToTransitions.map((ntt, n) => {
+        var times = 0
         if(ntt.transition == item.label && activeTransition == true){
           numNodes++
-          keyNode = parseInt(ntt.node)-1
+          var keyNode = parseInt(ntt.node)-1
           var nodeN = this.state.nodes[keyNode]
           if(nodeN.mark < ntt.weigthNode){
             activeTransition = false
           }else{
             var isPossible = true
+            var sumMark = 0
             while(isPossible){
               if(nodeN.mark < ntt.weigthNode){
                  isPossible = false
               }else{
                 times++
+                totalTimes++
                 nodeN.mark -= parseInt(ntt.weigthNode)
-                totalWeightInteration += parseInt(ntt.weigthNode)
+                sumMark += parseInt(ntt.weigthNode)
+                totalWeightInteration += ntt.weigthNode
               }
             }
-            this.state.nodes[keyNode] = nodeN
+
+            nodeN.mark = sumMark
+
+            var aux = {
+              node : keyNode,
+              weight : ntt.weigthNode,
+              times : times
+            }
+            auxTran.push(aux)
           }
         }
       })
@@ -283,10 +295,36 @@ class PetriNet extends Component {
         activeTransition = false
       }
 
+      if(activeTransition){
+        auxTran.map((item, i) => {
+          var lessTime = item.times
+          auxTran.map((dado, d) => {
+            if(item.weight == dado.weight && dado.times < item.times){
+              lessTime = dado.times
+            }
+          })
+          var nodeCurrent = this.state.nodes[item.node]
+          console.log("NODE["+item.node+"]"+parseInt(item.weight)+"*"+lessTime)
+          nodeCurrent.mark -= parseInt(item.weight)*lessTime
+          this.state.nodes[item.node] = nodeCurrent
+        })
+      }
+      
+      var isValid = false
+      var coef = (parseInt(totalTimes)/parseInt(numNodes))
+      while(!isValid){
+        var coef = (parseInt(totalTimes)/parseInt(numNodes))
+        if((coef / totalWeightState) % 1 == 0){
+          isValid = true
+        }else{
+          totalTimes--
+        }
+      }
+
       transitionCurrent = {
         id : item.label,
         active: activeTransition,
-        numTimes: (parseInt(times)/parseInt(numNodes))
+        numTimes: coef
       }
 
       listTransitions.push(transitionCurrent)
@@ -295,7 +333,6 @@ class PetriNet extends Component {
     listTransitions.map((item, i) => {
       if(item.active){
         this.state.transitionsToNodes.map((ttn, t) => {
-          console.log(ttn.transition+" --- "+item.id)
           if(ttn.transition == item.id){
             var totalMark = 0
             var keyNode = parseInt(ttn.node)-1
